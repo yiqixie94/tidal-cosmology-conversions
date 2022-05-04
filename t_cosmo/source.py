@@ -205,7 +205,7 @@ def bbh_params_lal_binary_neutron_star(
 
 def lambda_0_lal_binary_neutron_star(
         frequency_array, chirp_mass, mass_ratio, luminosity_distance, a_1, tilt_1,
-        phi_12, a_2, tilt_2, phi_jl, theta_jn, phase, lambda_0_0
+        phi_12, a_2, tilt_2, phi_jl, theta_jn, phase, lambda_0_0,
         **kwargs):
     """Fix cosmology (Planck18) and lambda_0_0 = 200., and sample luminosity_distance"""
     cosmo = cosmology.Planck18
