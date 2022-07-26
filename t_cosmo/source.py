@@ -156,7 +156,7 @@ def bbh_params_lal_binary_neutron_star(
         frequency_array, chirp_mass, mass_ratio, luminosity_distance, a_1, tilt_1,
         phi_12, a_2, tilt_2, phi_jl, theta_jn, phase, 
         **kwargs):
-    """Fix cosmology (Planck18) and lambda_0_0 = 200., and sample luminosity_distance"""
+    """Fix cosmology (Planck18) and lambda_0_0 = 200."""
     # h0 = 70.0
     # hubble_constant = h0 * u.km / u.s / u.Mpc
     # cosmo = cosmology.FlatLambdaCDM(H0=hubble_constant, Om0=0.3)
@@ -207,8 +207,62 @@ def lambda_0_lal_binary_neutron_star(
         frequency_array, chirp_mass, mass_ratio, luminosity_distance, a_1, tilt_1,
         phi_12, a_2, tilt_2, phi_jl, theta_jn, phase, lambda_0_0,
         **kwargs):
-    """Fix cosmology (Planck18) and lambda_0_0 = 200., and sample luminosity_distance"""
+    """Fix cosmology (Planck18), and sample lambda_0_0"""
     cosmo = cosmology.Planck18
+
+    try:
+        REDSHIFT = cosmology.z_at_value(
+            cosmo.luminosity_distance,
+            luminosity_distance * u.Mpc    
+        )
+    except cosmology.func.CosmologyError:
+        # Raised when unphysically small luminosity distance
+        # is provided. Redshift is considered to be zero.
+        REDSHIFT = 0.
+
+    total_mass = bilby.gw.conversion.chirp_mass_and_mass_ratio_to_total_mass(
+        chirp_mass, mass_ratio
+    )
+
+    mass_1 = total_mass / (1 + mass_ratio)
+    mass_2 = total_mass - mass_1
+
+    mass_1_source = mass_1 / (1 + REDSHIFT)
+    mass_2_source = mass_2 / (1 + REDSHIFT)
+
+    # FIXME: Hard code m_0 value
+    M0 = 1.4
+    lambda_1 = get_lambda_from_mass(
+        mass_1_source, lambda_0_0, M0=M0
+    )
+    lambda_2 = get_lambda_from_mass(
+        mass_2_source, lambda_0_0, M0=M0
+    )
+    # set lambda to 0 if negative
+    lambda_1 = 0 if lambda_1 < 0 else lambda_1
+    lambda_2 = 0 if lambda_2 < 0 else lambda_2
+
+    return bilby.gw.source.lal_binary_neutron_star(
+        frequency_array, mass_1, mass_2, luminosity_distance, a_1, tilt_1,
+        phi_12, a_2, tilt_2, phi_jl, theta_jn, phase, lambda_1, lambda_2,
+        **kwargs
+    )
+
+
+def h0_lal_binary_neutron_star(
+        frequency_array, chirp_mass, mass_ratio, luminosity_distance, a_1, tilt_1,
+        phi_12, a_2, tilt_2, phi_jl, theta_jn, phase, h0,
+        **kwargs):
+    """Fix lambda_0_0 = 200., and sample h0"""
+    cosmo_ref = cosmology.Planck18
+    cosmo = cosmology.FlatLambdaCDM(
+                name="Planck18_h0_shifted", 
+                H0=h0*cosmo.H0.unit, 
+                Om0=cosmo.Om0, 
+                Tcmb0=cosmo.Tcmb0, 
+                Neff=cosmo.Neff, 
+                m_nu=cosmo.m_nu, 
+                Ob0=cosmo.Ob0)
 
     try:
         REDSHIFT = cosmology.z_at_value(
