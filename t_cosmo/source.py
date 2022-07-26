@@ -254,7 +254,7 @@ def h0_lal_binary_neutron_star(
         phi_12, a_2, tilt_2, phi_jl, theta_jn, phase, h0,
         **kwargs):
     """Fix lambda_0_0 = 200., and sample h0"""
-    cosmo_ref = cosmology.Planck18
+    cosmo = cosmology.Planck18
     cosmo = cosmology.FlatLambdaCDM(
                 name="Planck18_h0_shifted", 
                 H0=h0*cosmo.H0.unit, 
@@ -286,6 +286,7 @@ def h0_lal_binary_neutron_star(
 
     # FIXME: Hard code m_0 value
     M0 = 1.4
+    lambda_0_0 = 200.
     lambda_1 = get_lambda_from_mass(
         mass_1_source, lambda_0_0, M0=M0
     )
